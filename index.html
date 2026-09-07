@@ -235,8 +235,31 @@
     statusEl.className = 'status' + (kind ? ' ' + kind : '');
   }
 
+  // Falls back to an in-memory value if localStorage is unavailable (e.g. some
+  // restricted/sandboxed contexts), so the page still works for the current tab session.
+  let memoryToken = '';
   function getToken() {
-    return localStorage.getItem('gh_pat') || '';
+    try {
+      return localStorage.getItem('gh_pat') || memoryToken;
+    } catch {
+      return memoryToken;
+    }
+  }
+  function setToken(value) {
+    memoryToken = value;
+    try {
+      localStorage.setItem('gh_pat', value);
+    } catch {
+      // ignore; memoryToken still holds it for this tab session
+    }
+  }
+  function clearTokenStorage() {
+    memoryToken = '';
+    try {
+      localStorage.removeItem('gh_pat');
+    } catch {
+      // ignore
+    }
   }
 
   function authHeaders() {
@@ -259,12 +282,12 @@
     if (e.target === modalBackdrop) modalBackdrop.classList.remove('open');
   });
   $('saveToken').addEventListener('click', () => {
-    localStorage.setItem('gh_pat', tokenInput.value.trim());
+    setToken(tokenInput.value.trim());
     modalBackdrop.classList.remove('open');
     setStatus('Token saved.', 'success');
   });
   $('clearToken').addEventListener('click', () => {
-    localStorage.removeItem('gh_pat');
+    clearTokenStorage();
     tokenInput.value = '';
     setStatus('Token cleared.');
   });
