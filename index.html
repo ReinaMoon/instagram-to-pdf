@@ -437,6 +437,7 @@
       }
 
       const downloadUrl = `https://github.com/${OWNER}/${REPO}/actions/runs/${runId}/artifacts/${artifact.id}`;
+      postUrlEl.value = '';
       setStatus(`Done! Opening download for ${label}...`, 'success');
       window.open(downloadUrl, '_blank');
     } catch (err) {
