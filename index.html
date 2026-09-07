@@ -271,6 +271,7 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script>
   const OWNER = 'ReinaMoon';
   const REPO = 'instagram-to-pdf';
@@ -304,14 +305,7 @@
     resultLinkEl.classList.add('show');
   }
 
-  async function downloadArtifactZip(artifactId, filename) {
-    const res = await fetch(
-      `${API}/repos/${OWNER}/${REPO}/actions/artifacts/${artifactId}/zip`,
-      { headers: authHeaders() }
-    );
-    if (!res.ok) throw new Error(`Failed to download file (${res.status})`);
-    const blob = await res.blob();
-    if (blob.size < 32) throw new Error('Download was empty.');
+  function saveBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -320,6 +314,35 @@
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  async function downloadArtifactFiles(artifactId) {
+    const res = await fetch(
+      `${API}/repos/${OWNER}/${REPO}/actions/artifacts/${artifactId}/zip`,
+      { headers: authHeaders() }
+    );
+    if (!res.ok) throw new Error(`Failed to download file (${res.status})`);
+    const zipBlob = await res.blob();
+    if (zipBlob.size < 32) throw new Error('Download was empty.');
+    if (typeof JSZip === 'undefined') {
+      saveBlob(zipBlob, 'download.zip');
+      return ['download.zip'];
+    }
+    const zip = await JSZip.loadAsync(zipBlob);
+    const entries = [];
+    zip.forEach((relativePath, file) => {
+      if (file.dir) return;
+      const name = relativePath.split('/').pop();
+      if (!name || name.startsWith('.')) return;
+      entries.push({ name, file });
+    });
+    if (entries.length === 0) throw new Error('Archive was empty.');
+    for (let i = 0; i < entries.length; i++) {
+      const blob = await entries[i].file.async('blob');
+      saveBlob(blob, entries[i].name);
+      if (i < entries.length - 1) await sleep(400);
+    }
+    return entries.map((e) => e.name);
   }
 
   // Falls back to an in-memory value if localStorage is unavailable (e.g. some
@@ -490,8 +513,8 @@
       postUrlEl.value = '';
       setStatus(`Downloading ${label}...`);
       try {
-        await downloadArtifactZip(artifact.id, `${artifactName}.zip`);
-        setStatus(`Done. Check your Downloads folder for ${artifactName}.zip`, 'success');
+        const names = await downloadArtifactFiles(artifact.id);
+        setStatus(`Done. Saved to Downloads: ${names.join(', ')}`, 'success');
         showResultLink(run.html_url, 'If the file is missing, download it from GitHub');
       } catch {
         setStatus('Could not save the file in this browser. Use the link below (log in to GitHub if asked).', 'error');
