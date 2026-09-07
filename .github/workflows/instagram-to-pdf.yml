@@ -25,7 +25,7 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Convert Instagram post to PDF
+      - name: Convert Instagram post
         run: node scripts/instagram-to-pdf.mjs "${{ inputs.post_url }}"
 
       - name: Upload PDF artifact
@@ -35,31 +35,9 @@ jobs:
           path: output/*.pdf
           if-no-files-found: error
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+      - name: Upload images artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: instagram-images
+          path: output/images/**
+          if-no-files-found: error
