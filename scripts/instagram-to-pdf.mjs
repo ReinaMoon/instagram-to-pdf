@@ -101,13 +101,15 @@ async function main() {
     throw new Error('No images found. The post may be private, deleted, or the page layout changed.');
   }
 
-  const tmpDir = path.resolve('tmp_images');
-  await fs.mkdir(tmpDir, { recursive: true });
+  // Save raw images under output/images/<shortcode>/ so they can be uploaded
+  // as their own "instagram-images" artifact, separate from the PDF artifact.
+  const imagesDir = path.resolve('output', 'images', shortcode);
+  await fs.mkdir(imagesDir, { recursive: true });
   const files = [];
   for (let i = 0; i < images.length; i++) {
     const res = await fetch(images[i].src);
     const buf = Buffer.from(await res.arrayBuffer());
-    const fp = path.join(tmpDir, `img_${String(i + 1).padStart(2, '0')}.jpg`);
+    const fp = path.join(imagesDir, `img_${String(i + 1).padStart(2, '0')}.jpg`);
     await fs.writeFile(fp, buf);
     files.push(fp);
   }
@@ -144,6 +146,7 @@ async function main() {
   });
 
   console.log('Saved PDF to', outPath);
+  console.log('Saved images to', imagesDir);
   await browser.close();
 }
 
