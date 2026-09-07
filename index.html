@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Instagram to PDF</title>
+<meta name="description" content="Paste a public Instagram post link and download all its images, or a single combined PDF." />
+<style>
+  :root {
+    --bg: #0f1117;
+    --card: #171a23;
+    --border: #2a2e3a;
+    --text: #e8e9ee;
+    --muted: #9aa0ac;
+    --accent: #7c5cff;
+    --accent-hover: #6a4bf0;
+    --success: #33d17a;
+    --error: #ff5c5c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(1200px 600px at 50% -10%, #1c2030 0%, var(--bg) 60%);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    width: 100%;
+    max-width: 560px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    position: relative;
+  }
+  h1 {
+    font-size: 22px;
+    margin: 0 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h1 .badge {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    background: rgba(124, 92, 255, 0.15);
+    border: 1px solid rgba(124, 92, 255, 0.35);
+    border-radius: 999px;
+    padding: 3px 9px;
+  }
+  p.subtitle {
+    margin: 0 0 24px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  input[type="url"], input[type="password"] {
+    width: 100%;
+    background: #0c0e14;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+  input[type="url"]:focus, input[type="password"]:focus {
+    border-color: var(--accent);
+  }
+  .buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  button {
+    cursor: pointer;
+    border: none;
+    border-radius: 10px;
+    padding: 13px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    background: var(--accent);
+    transition: background 0.15s ease, opacity 0.15s ease;
+  }
+  button:hover { background: var(--accent-hover); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  button.secondary:hover { border-color: var(--accent); background: rgba(124,92,255,0.08); }
+  .status {
+    margin-top: 20px;
+    font-size: 13px;
+    color: var(--muted);
+    min-height: 20px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+  .status.error { color: var(--error); }
+  .status.success { color: var(--success); }
+  .footer-row {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .footer-row a { color: var(--muted); }
+  .link-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 0;
+    text-decoration: underline;
+    font-weight: 400;
+  }
+  .link-btn:hover { color: var(--accent); background: none; }
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    width: 90%;
+    max-width: 440px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+  }
+  .modal h2 { font-size: 16px; margin: 0 0 8px; }
+  .modal p { font-size: 13px; color: var(--muted); line-height: 1.6; margin: 0 0 14px; }
+  .modal ol { font-size: 13px; color: var(--muted); line-height: 1.7; padding-left: 18px; margin: 0 0 14px; }
+  .modal .actions { display: flex; gap: 10px; margin-top: 16px; }
+  .modal .actions button { flex: 1; }
+  code {
+    background: #0c0e14;
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 5px;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>Instagram to PDF <span class="badge">web</span></h1>
+  <p class="subtitle">
+    Paste a link to a <strong>public</strong> Instagram post (single image or carousel).
+    Run it in the cloud via GitHub Actions and download every image, or one combined PDF.
+  </p>
+
+  <label for="postUrl">Instagram post URL</label>
+  <input id="postUrl" type="url" placeholder="https://www.instagram.com/p/XXXXXXXXX/" autocomplete="off" />
+
+  <div class="buttons">
+    <button id="btnImages">Download All Images</button>
+    <button id="btnPdf">Download as PDF</button>
+  </div>
+
+  <div id="status" class="status"></div>
+
+  <div class="footer-row">
+    <span>Runs on your own GitHub Actions minutes.</span>
+    <button class="link-btn" id="openSettings">GitHub token settings</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <h2>GitHub Personal Access Token</h2>
+    <p>
+      This page calls the GitHub REST API directly from your browser to start the workflow and check
+      its progress. It never leaves your browser except to talk to GitHub, and it is saved only in this
+      browser's local storage.
+    </p>
+    <p>Create a token with access to <strong>only this repository</strong>:</p>
+    <ol>
+      <li>Go to <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub &rsaquo; Settings &rsaquo; Fine-grained tokens</a></li>
+      <li>Under "Repository access", choose <strong>Only select repositories</strong> and pick this repo</li>
+      <li>Under "Permissions &rsaquo; Repository permissions", set <strong>Actions</strong> to <code>Read and write</code></li>
+      <li>Generate the token and paste it below</li>
+    </ol>
+    <label for="tokenInput">Personal access token</label>
+    <input id="tokenInput" type="password" placeholder="github_pat_..." autocomplete="off" />
+    <div class="actions">
+      <button class="secondary" id="clearToken">Clear</button>
+      <button id="saveToken">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const OWNER = 'ReinaMoon';
+  const REPO = 'instagram-to-pdf';
+  const WORKFLOW_FILE = 'instagram-to-pdf.yml';
+  const API = 'https://api.github.com';
+
+  const $ = (id) => document.getElementById(id);
+  const statusEl = $('status');
+  const postUrlEl = $('postUrl');
+  const btnImages = $('btnImages');
+  const btnPdf = $('btnPdf');
+
+  function setStatus(text, kind) {
+    statusEl.textContent = text;
+    statusEl.className = 'status' + (kind ? ' ' + kind : '');
+  }
+
+  function getToken() {
+    return localStorage.getItem('gh_pat') || '';
+  }
+
+  function authHeaders() {
+    return {
+      Authorization: 'Bearer ' + getToken(),
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    };
+  }
+
+  // --- Settings modal ---
+  const modalBackdrop = $('modalBackdrop');
+  const tokenInput = $('tokenInput');
+
+  $('openSettings').addEventListener('click', () => {
+    tokenInput.value = getToken();
+    modalBackdrop.classList.add('open');
+  });
+  modalBackdrop.addEventListener('click', (e) => {
+    if (e.target === modalBackdrop) modalBackdrop.classList.remove('open');
+  });
+  $('saveToken').addEventListener('click', () => {
+    localStorage.setItem('gh_pat', tokenInput.value.trim());
+    modalBackdrop.classList.remove('open');
+    setStatus('Token saved.', 'success');
+  });
+  $('clearToken').addEventListener('click', () => {
+    localStorage.removeItem('gh_pat');
+    tokenInput.value = '';
+    setStatus('Token cleared.');
+  });
+
+  function sleep(ms) {
+    return new Promise((r) => setTimeout(r, ms));
+  }
+
+  async function getLatestRunId() {
+    const res = await fetch(
+      `${API}/repos/${OWNER}/${REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=1`,
+      { headers: authHeaders() }
+    );
+    if (!res.ok) throw new Error(`Failed to list runs (${res.status})`);
+    const data = await res.json();
+    return data.workflow_runs[0]?.id ?? 0;
+  }
+
+  async function dispatchWorkflow(postUrl) {
+    const res = await fetch(
+      `${API}/repos/${OWNER}/${REPO}/actions/workflows/${WORKFLOW_FILE}/dispatches`,
+      {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref: 'main', inputs: { post_url: postUrl } }),
+      }
+    );
+    if (res.status === 401) throw new Error('Invalid or expired token. Open "GitHub token settings" and re-enter it.');
+    if (res.status === 403) throw new Error('Token does not have permission to run this workflow (needs Actions: Read and write on this repo).');
+    if (res.status === 404) throw new Error('Workflow or repo not found. Check OWNER/REPO in this page.');
+    if (!res.ok) throw new Error(`Failed to start workflow (${res.status})`);
+  }
+
+  async function waitForNewRun(previousId) {
+    for (let i = 0; i < 30; i++) {
+      await sleep(2000);
+      const id = await getLatestRunId();
+      if (id && id !== previousId) return id;
+    }
+    throw new Error('Timed out waiting for the workflow run to appear.');
+  }
+
+  async function waitForCompletion(runId) {
+    for (let i = 0; i < 90; i++) {
+      const res = await fetch(`${API}/repos/${OWNER}/${REPO}/actions/runs/${runId}`, { headers: authHeaders() });
+      if (!res.ok) throw new Error(`Failed to check run status (${res.status})`);
+      const run = await res.json();
+      setStatus(`Run #${run.run_number}: ${run.status}${run.status === 'in_progress' ? ' (usually ~1-2 min)' : ''}...`);
+      if (run.status === 'completed') return run;
+      await sleep(4000);
+    }
+    throw new Error('Timed out waiting for the run to finish.');
+  }
+
+  async function findArtifact(runId, name) {
+    const res = await fetch(`${API}/repos/${OWNER}/${REPO}/actions/runs/${runId}/artifacts`, { headers: authHeaders() });
+    if (!res.ok) throw new Error(`Failed to list artifacts (${res.status})`);
+    const data = await res.json();
+    return data.artifacts.find((a) => a.name === name);
+  }
+
+  function validatePostUrl(url) {
+    return /instagram\.com\/(p|reel)\//.test(url);
+  }
+
+  async function runAndDownload(artifactName, label) {
+    const postUrl = postUrlEl.value.trim();
+    if (!validatePostUrl(postUrl)) {
+      setStatus('Please paste a valid Instagram post URL (instagram.com/p/... or /reel/...).', 'error');
+      return;
+    }
+    if (!getToken()) {
+      setStatus('Set your GitHub token first (see "GitHub token settings" below).', 'error');
+      modalBackdrop.classList.add('open');
+      return;
+    }
+
+    btnImages.disabled = true;
+    btnPdf.disabled = true;
+    try {
+      setStatus('Checking current runs...');
+      const previousId = await getLatestRunId();
+
+      setStatus('Starting workflow on GitHub Actions...');
+      await dispatchWorkflow(postUrl);
+
+      setStatus('Waiting for the run to start...');
+      const runId = await waitForNewRun(previousId);
+
+      const run = await waitForCompletion(runId);
+
+      if (run.conclusion !== 'success') {
+        setStatus(
+          `Run finished with status "${run.conclusion}". Open the run log for details:\n${run.html_url}`,
+          'error'
+        );
+        return;
+      }
+
+      setStatus(`Done! Looking up the ${label} file...`);
+      const artifact = await findArtifact(runId, artifactName);
+      if (!artifact) {
+        setStatus(`Run succeeded but no "${artifactName}" artifact was found.`, 'error');
+        return;
+      }
+
+      const downloadUrl = `https://github.com/${OWNER}/${REPO}/actions/runs/${runId}/artifacts/${artifact.id}`;
+      setStatus(`Done! Opening download for ${label}...`, 'success');
+      window.open(downloadUrl, '_blank');
+    } catch (err) {
+      setStatus(err.message || String(err), 'error');
+    } finally {
+      btnImages.disabled = false;
+      btnPdf.disabled = false;
+    }
+  }
+
+  btnImages.addEventListener('click', () => runAndDownload('instagram-images', 'images'));
+  btnPdf.addEventListener('click', () => runAndDownload('instagram-pdf', 'PDF'));
+</script>
+
+</body>
+</html>
