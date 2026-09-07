@@ -1,0 +1,65 @@
+name: Instagram to PDF
+
+on:
+  workflow_dispatch:
+    inputs:
+      post_url:
+        description: 'Instagram post URL (e.g. https://www.instagram.com/p/XXXXXXXXX/)'
+        required: true
+        type: string
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Convert Instagram post to PDF
+        run: node scripts/instagram-to-pdf.mjs "${{ inputs.post_url }}"
+
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: instagram-pdf
+          path: output/*.pdf
+          if-no-files-found: error
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
