@@ -127,6 +127,40 @@
     color: var(--muted);
   }
   .footer-row a { color: var(--muted); }
+  .donate {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: #fbf6ee;
+    color: #3d2a1f;
+    border-radius: 12px;
+    text-decoration: none;
+    border: 1px solid #eadfcf;
+  }
+  .donate:hover { background: #f3eadc; }
+  .donate-cup {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #efe4d4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .donate-copy strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: #3d2a1f;
+  }
+  .donate-copy {
+    font-size: 12px;
+    color: #7a6a5c;
+  }
   .link-btn {
     background: none;
     border: none;
@@ -192,6 +226,14 @@
     <span>Runs on your own GitHub Actions minutes.</span>
     <button class="link-btn" id="openSettings">GitHub token settings</button>
   </div>
+
+  <a class="donate" href="https://www.paypal.com/donate/?hosted_button_id=US7SHUZUC6XLC" target="_blank" rel="noopener noreferrer">
+    <span class="donate-cup" aria-hidden="true">☕</span>
+    <span class="donate-copy">
+      <strong>Buy me a coffee</strong>
+      Support this little tool
+    </span>
+  </a>
 </div>
 
 <div class="modal-backdrop" id="modalBackdrop">

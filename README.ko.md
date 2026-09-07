@@ -68,6 +68,12 @@ GitHub 앱이나 모바일 브라우저에서도 같습니다.
 
 구현은 [`scripts/instagram-to-pdf.mjs`](./scripts/instagram-to-pdf.mjs), 워크플로는 [`.github/workflows/instagram-to-pdf.yml`](./.github/workflows/instagram-to-pdf.yml)입니다.
 
+## 후원
+
+도움이 됐다면 [PayPal로 커피 한 잔](https://www.paypal.com/donate/?hosted_button_id=US7SHUZUC6XLC) 사 주실 수 있습니다.
+
+[![Buy me a coffee](./assets/paypal-donate-cover.jpg)](https://www.paypal.com/donate/?hosted_button_id=US7SHUZUC6XLC)
+
 ## 기여
 
 이슈와 PR을 환영합니다. 인스타 마크업이 바뀌어 깨진 경우를 특히 기다립니다. 실패한 게시물 URL이나 게시물 종류를 적어 주세요.

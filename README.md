@@ -68,6 +68,12 @@ Instagram carousels only keep a few slides in the DOM. The script:
 
 See [`scripts/instagram-to-pdf.mjs`](./scripts/instagram-to-pdf.mjs) and [`.github/workflows/instagram-to-pdf.yml`](./.github/workflows/instagram-to-pdf.yml).
 
+## Support
+
+If this saved you some time, you can [buy me a coffee via PayPal](https://www.paypal.com/donate/?hosted_button_id=US7SHUZUC6XLC).
+
+[![Buy me a coffee](./assets/paypal-donate-cover.jpg)](https://www.paypal.com/donate/?hosted_button_id=US7SHUZUC6XLC)
+
 ## Contributing
 
 Issues and pull requests are welcome, especially fixes when Instagram changes markup. Include the post URL or post type that failed.
