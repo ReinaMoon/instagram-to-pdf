@@ -116,6 +116,16 @@
   }
   .status.error { color: var(--error); }
   .status.success { color: var(--success); }
+  .result-link {
+    display: none;
+    margin-top: 10px;
+    font-size: 13px;
+  }
+  .result-link.show { display: block; }
+  .result-link a {
+    color: var(--accent);
+    font-weight: 600;
+  }
   .footer-row {
     margin-top: 24px;
     padding-top: 16px;
@@ -221,6 +231,7 @@
   </div>
 
   <div id="status" class="status"></div>
+  <div id="resultLink" class="result-link"></div>
 
   <div class="footer-row">
     <span>Runs on your own GitHub Actions minutes.</span>
@@ -268,6 +279,7 @@
 
   const $ = (id) => document.getElementById(id);
   const statusEl = $('status');
+  const resultLinkEl = $('resultLink');
   const postUrlEl = $('postUrl');
   const btnImages = $('btnImages');
   const btnPdf = $('btnPdf');
@@ -275,6 +287,39 @@
   function setStatus(text, kind) {
     statusEl.textContent = text;
     statusEl.className = 'status' + (kind ? ' ' + kind : '');
+  }
+
+  function hideResultLink() {
+    resultLinkEl.classList.remove('show');
+    resultLinkEl.replaceChildren();
+  }
+
+  function showResultLink(href, label) {
+    const a = document.createElement('a');
+    a.href = href;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.textContent = label;
+    resultLinkEl.replaceChildren(a);
+    resultLinkEl.classList.add('show');
+  }
+
+  async function downloadArtifactZip(artifactId, filename) {
+    const res = await fetch(
+      `${API}/repos/${OWNER}/${REPO}/actions/artifacts/${artifactId}/zip`,
+      { headers: authHeaders() }
+    );
+    if (!res.ok) throw new Error(`Failed to download file (${res.status})`);
+    const blob = await res.blob();
+    if (blob.size < 32) throw new Error('Download was empty.');
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
   }
 
   // Falls back to an in-memory value if localStorage is unavailable (e.g. some
@@ -409,6 +454,7 @@
 
     btnImages.disabled = true;
     btnPdf.disabled = true;
+    hideResultLink();
     try {
       setStatus('Checking current runs...');
       const previousId = await getLatestRunId();
@@ -430,16 +476,27 @@
       }
 
       setStatus(`Done! Looking up the ${label} file...`);
-      const artifact = await findArtifact(runId, artifactName);
+      let artifact = await findArtifact(runId, artifactName);
+      for (let i = 0; i < 8 && !artifact; i++) {
+        await sleep(2000);
+        artifact = await findArtifact(runId, artifactName);
+      }
       if (!artifact) {
         setStatus(`Run succeeded but no "${artifactName}" artifact was found.`, 'error');
+        showResultLink(run.html_url, 'Open the run on GitHub');
         return;
       }
 
-      const downloadUrl = `https://github.com/${OWNER}/${REPO}/actions/runs/${runId}/artifacts/${artifact.id}`;
       postUrlEl.value = '';
-      setStatus(`Done! Opening download for ${label}...`, 'success');
-      window.open(downloadUrl, '_blank');
+      setStatus(`Downloading ${label}...`);
+      try {
+        await downloadArtifactZip(artifact.id, `${artifactName}.zip`);
+        setStatus(`Done. Check your Downloads folder for ${artifactName}.zip`, 'success');
+        showResultLink(run.html_url, 'If the file is missing, download it from GitHub');
+      } catch {
+        setStatus('Could not save the file in this browser. Use the link below (log in to GitHub if asked).', 'error');
+        showResultLink(run.html_url, 'Download from GitHub Actions');
+      }
     } catch (err) {
       setStatus(err.message || String(err), 'error');
     } finally {
